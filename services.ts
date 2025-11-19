@@ -76,48 +76,115 @@ export async function analyzeWithGemini(textNote: string, imageBlob: Blob) {
   return JSON.parse(cleanedJson);
 }
 
-export async function saveToSheet(spreadsheetId: string, aiResult: any, driveLink: string, originalNote: string, userId?: number) {
+export async function saveToSheet(spreadsheetId: string, aiResults: any | any[], driveLinks: string[], originalNote: string, userId?: number) {
   const timestamp = new Date().toISOString();
 
   // Get dynamic service account configuration
   const { sheets, serviceAccount } = ServiceAccountManager.getServiceAccountForUser(userId);
   console.log(`Using service account for sheets: ${serviceAccount ? serviceAccount.name : 'file-based'}`);
 
-  // 1. Tab "Summary"
-  await sheets.spreadsheets.values.append({
-    spreadsheetId,
-    range: "Summary!A:E",
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: [[
-        timestamp,
-        originalNote,
-        aiResult.summary,
-        aiResult.comparison_status,
-        aiResult.comparison_note
-      ]],
-    },
-  });
+  // Handle single result (backward compatibility) or multiple results
+  const results = Array.isArray(aiResults) ? aiResults : [aiResults];
+  const links = Array.isArray(driveLinks) ? driveLinks : [driveLinks];
 
-  // 2. Tab "Extracted"
-  await sheets.spreadsheets.values.append({
-    spreadsheetId,
-    range: "Extracted!A:C",
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: [[timestamp, aiResult.extracted_data, driveLink]],
-    },
-  });
+  if (results.length === 0) return;
 
-  // 3. Tab "Doc" (Menampilkan Gambar via Formula)
-  // Note: driveLink harus public atau accessible agar =IMAGE() bekerja,
-  // atau kita simpan Link-nya saja.
-  await sheets.spreadsheets.values.append({
-    spreadsheetId,
-    range: "Doc!A:C",
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: [[timestamp, driveLink, `=IMAGE("${driveLink}")`]], // Kolom C mencoba render gambar
-    },
-  });
+  // For multiple images, create a combined summary
+  if (results.length > 1) {
+    const combinedSummary = `Analyzed ${results.length} images. ` +
+      results.map((result, index) =>
+        `Image ${index + 1}: ${result.analysis?.summary?.substring(0, 100) || 'No summary'}...`
+      ).join(' ');
+
+    const overallStatus = results.every(r => r.analysis?.comparison_status === 'MATCH') ? 'MATCH' :
+                          results.some(r => r.analysis?.comparison_status === 'MISMATCH') ? 'MISMATCH' : 'PARTIAL';
+
+    const overallNote = `Batch analysis of ${results.length} meeting images. Individual statuses: ` +
+      results.map((r, i) => `Image ${i + 1}: ${r.analysis?.comparison_status || 'UNKNOWN'}`).join(', ');
+
+    // Save combined summary
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: "Summary!A:E",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [[
+          timestamp,
+          originalNote,
+          combinedSummary,
+          overallStatus,
+          overallNote
+        ]],
+      },
+    });
+
+    // Save individual extracted data for each image
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
+      const link = links[i] || '';
+
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: "Extracted!A:C",
+        valueInputOption: "USER_ENTERED",
+        requestBody: {
+          values: [[
+            `${timestamp} - Image ${i + 1}`,
+            result.analysis?.extracted_data || 'No data extracted',
+            link
+          ]],
+        },
+      });
+
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: "Doc!A:C",
+        valueInputOption: "USER_ENTERED",
+        requestBody: {
+          values: [[
+            `${timestamp} - Image ${i + 1}`,
+            link,
+            `=IMAGE("${link}")`
+          ]],
+        },
+      });
+    }
+  } else {
+    // Single image (original logic)
+    const aiResult = Array.isArray(results[0]) ? results[0] : results[0].analysis || results[0];
+    const driveLink = links[0];
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: "Summary!A:E",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [[
+          timestamp,
+          originalNote,
+          aiResult.summary,
+          aiResult.comparison_status,
+          aiResult.comparison_note
+        ]],
+      },
+    });
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: "Extracted!A:C",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [[timestamp, aiResult.extracted_data, driveLink]],
+      },
+    });
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: "Doc!A:C",
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [[timestamp, driveLink, `=IMAGE("${driveLink}")`]],
+      },
+    });
+  }
 }

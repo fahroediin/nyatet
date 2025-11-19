@@ -260,36 +260,76 @@ const app = new Elysia()
       if (!authHeader) return { error: "Unauthorized" };
       const token = authHeader.split(" ")[1];
       const profile = await jwt.verify(token);
-      
+
       if (!profile) return { error: "Invalid Token" };
 
-      const { note, image } = body;
+      const { note, images } = body;
 
-      // 2. Upload ke Google Drive
-      const driveFile = await uploadImageToDrive(image, `meeting-img-${Date.now()}.jpg`, profile.id);
-      // Kita ambil thumbnailLink atau webViewLink. 
-      // Note: Untuk =IMAGE() di sheet, gambar harus accessible public atau di drive yg sama.
-      // Disini kita pakai webViewLink untuk referensi.
-      const fileLink = driveFile.webViewLink || "";
+      if (!images) {
+        return { error: "No images provided" };
+      }
 
-      // 3. Analisa dengan Gemini AI
-      console.log("Analyzing with AI...");
-      const aiAnalysis = await analyzeWithGemini(note, image);
+      // Handle single file (backward compatibility) or multiple files
+      const imageArray = Array.isArray(images) ? images : [images];
 
-      // 4. Simpan ke Google Sheet milik user
-      console.log("Saving to Spreadsheet...");
-      await saveToSheet(profile.spreadsheet_id, aiAnalysis, fileLink, note, profile.id);
+      if (imageArray.length === 0) {
+        return { error: "No valid images found" };
+      }
 
-      return {
-        status: "success",
-        data: aiAnalysis,
-        file: fileLink,
-      };
+      console.log(`Processing ${imageArray.length} image(s) for user ${profile.id}`);
+
+      try {
+        const results = [];
+        const fileLinks = [];
+
+        // Process each image
+        for (let i = 0; i < imageArray.length; i++) {
+          const image = imageArray[i];
+          const timestamp = Date.now();
+          const fileName = `meeting-img-${timestamp}-${i + 1}.jpg`;
+
+          console.log(`Processing image ${i + 1}/${imageArray.length}: ${fileName}`);
+
+          // 2. Upload ke Google Drive
+          const driveFile = await uploadImageToDrive(image, fileName, profile.id);
+          const fileLink = driveFile.webViewLink || "";
+          fileLinks.push(fileLink);
+
+          // 3. Analisa dengan Gemini AI
+          console.log(`Analyzing image ${i + 1} with AI...`);
+          const aiAnalysis = await analyzeWithGemini(note, image);
+
+          results.push({
+            index: i + 1,
+            fileName,
+            fileLink,
+            analysis: aiAnalysis
+          });
+        }
+
+        // 4. Simpan ke Google Sheet milik user (simpan semua hasil)
+        console.log("Saving all results to Spreadsheet...");
+        await saveToSheet(profile.spreadsheet_id, results, fileLinks, note, profile.id);
+
+        return {
+          status: "success",
+          totalImages: imageArray.length,
+          results: results,
+          message: `Successfully analyzed ${imageArray.length} image(s)`
+        };
+
+      } catch (error) {
+        console.error("Error during analysis:", error);
+        return {
+          error: "Analysis failed",
+          details: error instanceof Error ? error.message : "Unknown error"
+        };
+      }
     },
     {
       body: t.Object({
         note: t.String(),
-        image: t.File(), // Fitur Elysia untuk handle multipart file
+        images: t.Optional(t.Union([t.File(), t.Array(t.File())])), // Support single or multiple files
       }),
     }
   )

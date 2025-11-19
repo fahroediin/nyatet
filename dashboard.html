@@ -42,15 +42,15 @@
                             ></textarea>
                         </div>
                         <div class="form-group">
-                            <label>Meeting Image/Screenshot</label>
+                            <label>Meeting Images/Screenshots</label>
                             <div class="file-upload" id="fileUpload">
-                                <input type="file" id="meetingImage" accept="image/*" required>
+                                <input type="file" id="meetingImages" accept="image/*" multiple required>
                                 <div class="file-upload-icon">📸</div>
-                                <div class="file-upload-text">Click to upload or drag and drop</div>
-                                <div class="file-upload-hint">PNG, JPG, GIF up to 10MB</div>
-                                <div id="filePreview" class="hidden mt-3">
-                                    <img id="previewImage" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
-                                    <button type="button" class="btn btn-danger btn-small mt-2" onclick="clearFile()">Remove</button>
+                                <div class="file-upload-text">Click to upload or drag and drop (multiple files supported)</div>
+                                <div class="file-upload-hint">PNG, JPG, GIF up to 10MB per file. Select multiple images for batch analysis.</div>
+                                <div id="filePreviewContainer" class="hidden mt-3">
+                                    <div id="filePreviews"></div>
+                                    <button type="button" class="btn btn-danger btn-small mt-2" onclick="clearFiles()">Remove All</button>
                                 </div>
                             </div>
                         </div>
@@ -124,7 +124,7 @@
         // File upload setup
         function setupFileUpload() {
             const fileUpload = document.getElementById('fileUpload');
-            const fileInput = document.getElementById('meetingImage');
+            const fileInput = document.getElementById('meetingImages');
 
             // Click to upload
             fileUpload.addEventListener('click', () => {
@@ -149,7 +149,9 @@
                 fileUpload.classList.remove('dragover');
 
                 const files = e.dataTransfer.files;
-                if (files.length > 0 && files[0].type.startsWith('image/')) {
+                const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+
+                if (imageFiles.length > 0) {
                     fileInput.files = files;
                     handleFileSelect({ target: { files } });
                 }
@@ -157,36 +159,78 @@
         }
 
         function handleFileSelect(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+            const files = Array.from(e.target.files);
+            const imageFiles = files.filter(file => file.type.startsWith('image/'));
 
-            // Check file size (10MB limit)
-            if (file.size > 10 * 1024 * 1024) {
-                showAlert('File size must be less than 10MB');
-                clearFile();
+            if (imageFiles.length === 0) {
+                showAlert('Please select at least one image file');
+                clearFiles();
                 return;
             }
 
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById('previewImage').src = e.target.result;
-                document.getElementById('filePreview').classList.remove('hidden');
+            // Check file sizes (10MB limit per file)
+            const oversizedFiles = imageFiles.filter(file => file.size > 10 * 1024 * 1024);
+            if (oversizedFiles.length > 0) {
+                showAlert(`${oversizedFiles.length} file(s) exceed 10MB limit`);
+                clearFiles();
+                return;
+            }
 
-                // Hide upload text
-                document.querySelector('.file-upload-icon').classList.add('hidden');
-                document.querySelector('.file-upload-text').classList.add('hidden');
-                document.querySelector('.file-upload-hint').classList.add('hidden');
-            };
-            reader.readAsDataURL(file);
+            // Show previews
+            const previewsContainer = document.getElementById('filePreviews');
+            previewsContainer.innerHTML = '';
+
+            imageFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'file-preview-item';
+                    previewDiv.style.cssText = 'position: relative; display: inline-block; margin: 5px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px; background: #f9fafb;';
+                    previewDiv.innerHTML = `
+                        <img src="${e.target.result}" style="max-width: 150px; max-height: 150px; border-radius: 4px;">
+                        <div style="font-size: 0.75rem; color: #6b7280; margin-top: 4px; text-align: center; max-width: 150px; word-wrap: break-word;">
+                            ${file.name}
+                        </div>
+                        <button type="button" onclick="removeFile(${index})" style="position: absolute; top: 2px; right: 2px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px;">×</button>
+                    `;
+                    previewsContainer.appendChild(previewDiv);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Show preview container and hide upload text
+            document.getElementById('filePreviewContainer').classList.remove('hidden');
+            document.querySelector('.file-upload-icon').classList.add('hidden');
+            document.querySelector('.file-upload-text').classList.add('hidden');
+            document.querySelector('.file-upload-hint').classList.add('hidden');
+
+            // Update button text
+            document.getElementById('analyzeBtnText').textContent = `🔍 Analyze ${imageFiles.length} Image${imageFiles.length > 1 ? 's' : ''}`;
         }
 
-        function clearFile() {
-            document.getElementById('meetingImage').value = '';
-            document.getElementById('filePreview').classList.add('hidden');
+        function removeFile(index) {
+            const fileInput = document.getElementById('meetingImages');
+            const files = Array.from(fileInput.files);
+
+            files.splice(index, 1);
+
+            // Create new FileList
+            const dataTransfer = new DataTransfer();
+            files.forEach(file => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+
+            // Re-render previews
+            handleFileSelect({ target: { files } });
+        }
+
+        function clearFiles() {
+            document.getElementById('meetingImages').value = '';
+            document.getElementById('filePreviewContainer').classList.add('hidden');
+            document.getElementById('filePreviews').innerHTML = '';
             document.querySelector('.file-upload-icon').classList.remove('hidden');
             document.querySelector('.file-upload-text').classList.remove('hidden');
             document.querySelector('.file-upload-hint').classList.remove('hidden');
+            document.getElementById('analyzeBtnText').textContent = '🔍 Analyze Meeting';
         }
 
         // Form submission
@@ -200,10 +244,10 @@
             clearAlerts();
 
             const note = document.getElementById('meetingNote').value;
-            const imageFile = document.getElementById('meetingImage').files[0];
+            const imageFiles = document.getElementById('meetingImages').files;
 
-            if (!imageFile) {
-                showAlert('Please select an image to analyze');
+            if (!imageFiles || imageFiles.length === 0) {
+                showAlert('Please select at least one image to analyze');
                 return;
             }
 
@@ -212,7 +256,11 @@
             try {
                 const formData = new FormData();
                 formData.append('note', note);
-                formData.append('image', imageFile);
+
+                // Append all images
+                for (let i = 0; i < imageFiles.length; i++) {
+                    formData.append('images', imageFiles[i]);
+                }
 
                 const response = await fetch(`${API_BASE}/analyze-meeting`, {
                     method: 'POST',
@@ -226,7 +274,7 @@
 
                 if (result.status === 'success') {
                     displayResults(result);
-                    showAlert('Analysis completed successfully!', 'success');
+                    showAlert(`Successfully analyzed ${result.totalImages} image(s)!`, 'success');
 
                     // Scroll to results
                     document.getElementById('resultsSection').scrollIntoView({
@@ -234,6 +282,9 @@
                     });
                 } else {
                     showAlert(result.error || 'Analysis failed');
+                    if (result.details) {
+                        console.error('Analysis details:', result.details);
+                    }
                 }
             } catch (error) {
                 showAlert('Network error. Please try again.');
@@ -244,61 +295,152 @@
         }
 
         function displayResults(result) {
-            const data = result.data;
-            const fileUrl = result.file;
+            const results = result.results || [];
+            const fileUrls = result.file || [];
 
             // Show results section
             document.getElementById('resultsSection').classList.remove('hidden');
 
-            // Display main analysis results
+            if (results.length === 1) {
+                // Single image result (original logic)
+                const data = results[0].analysis;
+                const fileUrl = results[0].fileLink;
+
+                // Display main analysis results
+                document.getElementById('analysisResults').innerHTML = `
+                    <div class="mb-4">
+                        <h4 style="color: #374151; margin-bottom: 0.5rem;">Summary</h4>
+                        <p style="line-height: 1.6;">${data.summary}</p>
+                    </div>
+
+                    <div>
+                        <h4 style="color: #374151; margin-bottom: 0.5rem;">Comparison Note</h4>
+                        <p style="line-height: 1.6;">${data.comparison_note}</p>
+                    </div>
+                `;
+
+                // Display comparison status
+                const statusClass = `status-${data.comparison_status.toLowerCase()}`;
+                document.getElementById('comparisonStatus').innerHTML = `
+                    <span class="status-badge ${statusClass}">
+                        ${data.comparison_status}
+                    </span>
+                    <p class="mt-2" style="line-height: 1.6;">
+                        ${data.comparison_note}
+                    </p>
+                `;
+
+                // Display file info
+                document.getElementById('fileInfo').innerHTML = `
+                    <p><strong>File Link:</strong></p>
+                    <a href="${fileUrl}" target="_blank" style="color: #2563eb; text-decoration: none;">
+                        ${fileUrl}
+                    </a>
+                    <p class="mt-2">
+                        <small style="color: #6b7280;">
+                            Image uploaded to Google Drive and processed with AI
+                        </small>
+                    </p>
+                `;
+
+                // Display extracted data
+                document.getElementById('extractedData').innerHTML = `
+                    <div class="extracted-data">${data.extracted_data}</div>
+                `;
+
+                // Add to history
+                addToHistory({
+                    timestamp: new Date().toISOString(),
+                    note: document.getElementById('meetingNote').value,
+                    summary: data.summary,
+                    status: data.comparison_status
+                });
+
+            } else {
+                // Multiple images results
+                displayBatchResults(results);
+
+                // Add to history
+                addToHistory({
+                    timestamp: new Date().toISOString(),
+                    note: document.getElementById('meetingNote').value,
+                    summary: `Batch analysis of ${results.length} images`,
+                    status: 'BATCH'
+                });
+            }
+        }
+
+        function displayBatchResults(results) {
+            // Display main analysis results for batch
+            const totalImages = results.length;
+            const matchCount = results.filter(r => r.analysis?.comparison_status === 'MATCH').length;
+            const mismatchCount = results.filter(r => r.analysis?.comparison_status === 'MISMATCH').length;
+            const partialCount = results.filter(r => r.analysis?.comparison_status === 'PARTIAL').length;
+
             document.getElementById('analysisResults').innerHTML = `
                 <div class="mb-4">
-                    <h4 style="color: #374151; margin-bottom: 0.5rem;">Summary</h4>
-                    <p style="line-height: 1.6;">${data.summary}</p>
+                    <h4 style="color: #374151; margin-bottom: 0.5rem;">Batch Analysis Summary</h4>
+                    <p style="line-height: 1.6;">Analyzed ${totalImages} meeting images successfully.</p>
+                    <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                        <li>✅ <strong>Match:</strong> ${matchCount} image(s)</li>
+                        <li>⚠️ <strong>Partial:</strong> ${partialCount} image(s)</li>
+                        <li>❌ <strong>Mismatch:</strong> ${mismatchCount} image(s)</li>
+                    </ul>
                 </div>
 
                 <div>
-                    <h4 style="color: #374151; margin-bottom: 0.5rem;">Comparison Note</h4>
-                    <p style="line-height: 1.6;">${data.comparison_note}</p>
+                    <h4 style="color: #374151; margin-bottom: 0.5rem;">Individual Results</h4>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${results.map((result, index) => `
+                            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                                <h5 style="color: #374151; margin-bottom: 0.5rem;">Image ${index + 1}: ${result.fileName}</h5>
+                                <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">
+                                    Status: <span class="status-badge status-${result.analysis?.comparison_status?.toLowerCase() || 'match'}">
+                                        ${result.analysis?.comparison_status || 'UNKNOWN'}
+                                    </span>
+                                </p>
+                                <p style="line-height: 1.5; font-size: 0.875rem;">
+                                    ${result.analysis?.summary?.substring(0, 200) || 'No summary'}${result.analysis?.summary?.length > 200 ? '...' : ''}
+                                </p>
+                                <a href="${result.fileLink}" target="_blank" style="color: #2563eb; text-decoration: none; font-size: 0.875rem;">
+                                    View Image →
+                                </a>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             `;
 
-            // Display comparison status
-            const statusClass = `status-${data.comparison_status.toLowerCase()}`;
+            // Overall comparison status
+            const overallStatus = mismatchCount > 0 ? 'MISMATCH' :
+                                 partialCount > 0 ? 'PARTIAL' : 'MATCH';
+
+            const statusClass = `status-${overallStatus.toLowerCase()}`;
             document.getElementById('comparisonStatus').innerHTML = `
                 <span class="status-badge ${statusClass}">
-                    ${data.comparison_status}
+                    Overall: ${overallStatus}
                 </span>
                 <p class="mt-2" style="line-height: 1.6;">
-                    ${data.comparison_note}
+                    Batch analysis completed with ${mismatchCount} mismatches found.
                 </p>
             `;
 
-            // Display file info
+            // Display file info for batch
             document.getElementById('fileInfo').innerHTML = `
-                <p><strong>File Link:</strong></p>
-                <a href="${fileUrl}" target="_blank" style="color: #2563eb; text-decoration: none;">
-                    ${fileUrl}
-                </a>
+                <p><strong>Uploaded Files:</strong> ${totalImages}</p>
+                <p><strong>Analysis Type:</strong> Batch Processing</p>
                 <p class="mt-2">
                     <small style="color: #6b7280;">
-                        Image uploaded to Google Drive and processed with AI
+                        All images uploaded to Google Drive and processed with AI
                     </small>
                 </p>
             `;
 
-            // Display extracted data
+            // Combined extracted data
+            const allExtractedData = results.map(r => r.analysis?.extracted_data || '').join('\n\n---\n\n');
             document.getElementById('extractedData').innerHTML = `
-                <div class="extracted-data">${data.extracted_data}</div>
+                <div class="extracted-data">${allExtractedData || 'No data extracted from images'}</div>
             `;
-
-            // Add to history (in real app, this would be saved to backend)
-            addToHistory({
-                timestamp: new Date().toISOString(),
-                note: document.getElementById('meetingNote').value,
-                summary: data.summary,
-                status: data.comparison_status
-            });
         }
 
         // History management
