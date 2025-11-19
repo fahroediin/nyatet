@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Nyatet Business Analyst Assistant</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <a href="/dashboard.html" class="logo">🚀 Nyatet</a>
+                <nav class="nav-links">
+                    <a href="/dashboard.html" class="nav-link">Dashboard</a>
+                    <a href="/admin" class="nav-link">Admin</a>
+                    <span id="userEmail" class="nav-link"></span>
+                    <button class="btn-logout" onclick="logout()">Logout</button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <h1 class="page-title">Meeting Analysis Dashboard</h1>
+
+            <!-- Meeting Analysis Form -->
+            <div class="meeting-form">
+                <h2>Analyze Meeting</h2>
+                <form id="analysisForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="meetingNote">Meeting Notes</label>
+                            <textarea
+                                id="meetingNote"
+                                placeholder="Enter your meeting notes, key points, decisions, action items..."
+                                required
+                            ></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Meeting Image/Screenshot</label>
+                            <div class="file-upload" id="fileUpload">
+                                <input type="file" id="meetingImage" accept="image/*" required>
+                                <div class="file-upload-icon">📸</div>
+                                <div class="file-upload-text">Click to upload or drag and drop</div>
+                                <div class="file-upload-hint">PNG, JPG, GIF up to 10MB</div>
+                                <div id="filePreview" class="hidden mt-3">
+                                    <img id="previewImage" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+                                    <button type="button" class="btn btn-danger btn-small mt-2" onclick="clearFile()">Remove</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                        <span id="analyzeBtnText">🔍 Analyze Meeting</span>
+                    </button>
+                </form>
+
+                <!-- Alerts -->
+                <div id="alertContainer"></div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="hidden">
+                <div class="results-container">
+                    <!-- Main Analysis Results -->
+                    <div class="result-card">
+                        <h3>Analysis Results</h3>
+                        <div id="analysisResults"></div>
+                    </div>
+
+                    <!-- Status & Info -->
+                    <div>
+                        <div class="result-card mb-3">
+                            <h3>Verification Status</h3>
+                            <div id="comparisonStatus"></div>
+                        </div>
+
+                        <div class="result-card mb-3">
+                            <h3>File Information</h3>
+                            <div id="fileInfo"></div>
+                        </div>
+
+                        <div class="result-card">
+                            <h3>Extracted Data</h3>
+                            <div id="extractedData"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="mt-5">
+                <h2>Recent Analysis</h2>
+                <div id="historyContainer">
+                    <p style="color: #6b7280; text-align: center;">No analysis history yet</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let authToken = localStorage.getItem('nyatet_auth_token');
+        let userEmail = localStorage.getItem('nyatet_user_email');
+
+        // Check authentication
+        if (!authToken) {
+            window.location.href = '/login.html';
+            exit;
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('userEmail').textContent = userEmail || 'User';
+            setupFileUpload();
+            setupFormSubmission();
+        });
+
+        // File upload setup
+        function setupFileUpload() {
+            const fileUpload = document.getElementById('fileUpload');
+            const fileInput = document.getElementById('meetingImage');
+
+            // Click to upload
+            fileUpload.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // File selection
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Drag and drop
+            fileUpload.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUpload.classList.add('dragover');
+            });
+
+            fileUpload.addEventListener('dragleave', () => {
+                fileUpload.classList.remove('dragover');
+            });
+
+            fileUpload.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUpload.classList.remove('dragover');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('image/')) {
+                    fileInput.files = files;
+                    handleFileSelect({ target: { files } });
+                }
+            });
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Check file size (10MB limit)
+            if (file.size > 10 * 1024 * 1024) {
+                showAlert('File size must be less than 10MB');
+                clearFile();
+                return;
+            }
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('filePreview').classList.remove('hidden');
+
+                // Hide upload text
+                document.querySelector('.file-upload-icon').classList.add('hidden');
+                document.querySelector('.file-upload-text').classList.add('hidden');
+                document.querySelector('.file-upload-hint').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearFile() {
+            document.getElementById('meetingImage').value = '';
+            document.getElementById('filePreview').classList.add('hidden');
+            document.querySelector('.file-upload-icon').classList.remove('hidden');
+            document.querySelector('.file-upload-text').classList.remove('hidden');
+            document.querySelector('.file-upload-hint').classList.remove('hidden');
+        }
+
+        // Form submission
+        function setupFormSubmission() {
+            const form = document.getElementById('analysisForm');
+            form.addEventListener('submit', handleAnalysisSubmit);
+        }
+
+        async function handleAnalysisSubmit(e) {
+            e.preventDefault();
+            clearAlerts();
+
+            const note = document.getElementById('meetingNote').value;
+            const imageFile = document.getElementById('meetingImage').files[0];
+
+            if (!imageFile) {
+                showAlert('Please select an image to analyze');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const formData = new FormData();
+                formData.append('note', note);
+                formData.append('image', imageFile);
+
+                const response = await fetch(`${API_BASE}/analyze-meeting`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    displayResults(result);
+                    showAlert('Analysis completed successfully!', 'success');
+
+                    // Scroll to results
+                    document.getElementById('resultsSection').scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                } else {
+                    showAlert(result.error || 'Analysis failed');
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.');
+                console.error('Analysis error:', error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function displayResults(result) {
+            const data = result.data;
+            const fileUrl = result.file;
+
+            // Show results section
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+            // Display main analysis results
+            document.getElementById('analysisResults').innerHTML = `
+                <div class="mb-4">
+                    <h4 style="color: #374151; margin-bottom: 0.5rem;">Summary</h4>
+                    <p style="line-height: 1.6;">${data.summary}</p>
+                </div>
+
+                <div>
+                    <h4 style="color: #374151; margin-bottom: 0.5rem;">Comparison Note</h4>
+                    <p style="line-height: 1.6;">${data.comparison_note}</p>
+                </div>
+            `;
+
+            // Display comparison status
+            const statusClass = `status-${data.comparison_status.toLowerCase()}`;
+            document.getElementById('comparisonStatus').innerHTML = `
+                <span class="status-badge ${statusClass}">
+                    ${data.comparison_status}
+                </span>
+                <p class="mt-2" style="line-height: 1.6;">
+                    ${data.comparison_note}
+                </p>
+            `;
+
+            // Display file info
+            document.getElementById('fileInfo').innerHTML = `
+                <p><strong>File Link:</strong></p>
+                <a href="${fileUrl}" target="_blank" style="color: #2563eb; text-decoration: none;">
+                    ${fileUrl}
+                </a>
+                <p class="mt-2">
+                    <small style="color: #6b7280;">
+                        Image uploaded to Google Drive and processed with AI
+                    </small>
+                </p>
+            `;
+
+            // Display extracted data
+            document.getElementById('extractedData').innerHTML = `
+                <div class="extracted-data">${data.extracted_data}</div>
+            `;
+
+            // Add to history (in real app, this would be saved to backend)
+            addToHistory({
+                timestamp: new Date().toISOString(),
+                note: document.getElementById('meetingNote').value,
+                summary: data.summary,
+                status: data.comparison_status
+            });
+        }
+
+        // History management
+        function addToHistory(analysis) {
+            const historyContainer = document.getElementById('historyContainer');
+
+            // Get existing history from localStorage
+            let history = JSON.parse(localStorage.getItem('nyatet_analysis_history') || '[]');
+
+            // Add new analysis
+            history.unshift(analysis);
+
+            // Keep only last 10 analyses
+            history = history.slice(0, 10);
+
+            // Save to localStorage
+            localStorage.setItem('nyatet_analysis_history', JSON.stringify(history));
+
+            // Update display
+            displayHistory(history);
+        }
+
+        function displayHistory(history) {
+            const historyContainer = document.getElementById('historyContainer');
+
+            if (history.length === 0) {
+                historyContainer.innerHTML = '<p style="color: #6b7280; text-align: center;">No analysis history yet</p>';
+                return;
+            }
+
+            const statusClassMap = {
+                'match': 'status-match',
+                'partial': 'status-partial',
+                'mismatch': 'status-mismatch'
+            };
+
+            historyContainer.innerHTML = history.map((item, index) => `
+                <div class="result-card mb-3" style="cursor: pointer;" onclick="loadFromHistory(${index})">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4 style="margin-bottom: 0.5rem;">${item.note.substring(0, 50)}${item.note.length > 50 ? '...' : ''}</h4>
+                            <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 0.5rem;">
+                                ${new Date(item.timestamp).toLocaleString()}
+                            </p>
+                            <p style="line-height: 1.4;">${item.summary.substring(0, 100)}${item.summary.length > 100 ? '...' : ''}</p>
+                        </div>
+                        <span class="status-badge ${statusClassMap[item.status.toLowerCase()] || 'status-match'}">
+                            ${item.status}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadFromHistory(index) {
+            const history = JSON.parse(localStorage.getItem('nyatet_analysis_history') || '[]');
+            const item = history[index];
+
+            if (item) {
+                document.getElementById('meetingNote').value = item.note;
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Load history on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const history = JSON.parse(localStorage.getItem('nyatet_analysis_history') || '[]');
+            displayHistory(history);
+        });
+
+        // UI Functions
+        function setLoading(loading) {
+            const btn = document.getElementById('analyzeBtn');
+            const btnText = document.getElementById('analyzeBtnText');
+
+            if (loading) {
+                btn.disabled = true;
+                btnText.innerHTML = '<span class="loading"></span> Analyzing...';
+            } else {
+                btn.disabled = false;
+                btnText.textContent = '🔍 Analyze Meeting';
+            }
+        }
+
+        function showAlert(message, type = 'error') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}">
+                    ${message}
+                </div>
+            `;
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                clearAlerts();
+            }, 5000);
+        }
+
+        function clearAlerts() {
+            document.getElementById('alertContainer').innerHTML = '';
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('nyatet_auth_token');
+            localStorage.removeItem('nyatet_user_email');
+            window.location.href = '/login.html';
+        }
+
+        // Handle API errors (401 Unauthorized)
+        window.addEventListener('unhandledrejection', (e) => {
+            if (e.reason && e.reason.status === 401) {
+                logout();
+            }
+        });
+    </script>
+</body>
+</html>

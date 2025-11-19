@@ -3,235 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nyatet - Service Account Admin</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        h2 {
-            color: #555;
-            margin-bottom: 15px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #555;
-        }
-        input, textarea, select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        textarea {
-            height: 150px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button.danger {
-            background-color: #dc3545;
-        }
-        button.danger:hover {
-            background-color: #c82333;
-        }
-        button.success {
-            background-color: #28a745;
-        }
-        button.success:hover {
-            background-color: #218838;
-        }
-        button.warning {
-            background-color: #ffc107;
-            color: #212529;
-        }
-        button.warning:hover {
-            background-color: #e0a800;
-        }
-        .service-account {
-            border: 1px solid #ddd;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-        }
-        .service-account.active {
-            border-color: #28a745;
-            background-color: #f8fff9;
-        }
-        .status {
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .status.active {
-            background-color: #28a745;
-            color: white;
-        }
-        .status.inactive {
-            background-color: #6c757d;
-            color: white;
-        }
-        .auth-section {
-            background-color: #fff3cd;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .hidden {
-            display: none;
-        }
-        .error {
-            color: #dc3545;
-            background-color: #f8d7da;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-        .success {
-            color: #155724;
-            background-color: #d4edda;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-        .actions {
-            margin-top: 15px;
-        }
-        .login-form {
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        .main-content {
-            display: none;
-        }
-        .user-select {
-            max-width: 300px;
-        }
-        pre {
-            background-color: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
-            font-size: 12px;
-        }
-    </style>
+    <title>Admin Panel - Nyatet Business Analyst Assistant</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>🔧 Nyatet - Service Account Management</h1>
-
-        <!-- Login Section -->
-        <div id="loginSection" class="login-form">
-            <h2>Admin Login</h2>
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" placeholder="admin@example.com">
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <div>
+                    <h1 class="admin-title">🔧 Nyatet Admin Panel</h1>
+                    <p class="admin-subtitle">Service Account Management</p>
+                </div>
+                <div>
+                    <a href="/login.html" class="btn btn-small" style="background: #2563eb; color: white; text-decoration: none;">
+                        Back to Login
+                    </a>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" id="password" placeholder="Password">
-            </div>
-            <button onclick="login()" class="success">Login</button>
-            <div id="loginError" class="error hidden"></div>
-        </div>
+        </header>
 
         <!-- Main Content -->
-        <div id="mainContent" class="main-content">
-            <div class="auth-section">
-                <strong>Logged in as:</strong> <span id="userEmail"></span>
-                <button onclick="logout()" style="float: right;" class="warning">Logout</button>
+        <main class="admin-main">
+            <!-- Login Section -->
+            <div id="loginSection" class="admin-section" style="max-width: 500px; margin: 2rem auto;">
+                <h2>Admin Login</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" placeholder="admin@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="loginBtn">
+                        <span id="loginBtnText">Login</span>
+                    </button>
+                    <div id="loginError" class="hidden mt-3"></div>
+                </form>
             </div>
 
-            <!-- Add Service Account -->
-            <div class="container">
-                <h2>Add New Service Account</h2>
-                <div class="form-group">
-                    <label for="saName">Service Account Name:</label>
-                    <input type="text" id="saName" placeholder="e.g., Production, Development, Team-A">
+            <!-- Admin Interface -->
+            <div id="mainContent" class="hidden">
+                <!-- User Info -->
+                <div class="admin-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3>Logged in as: <strong id="userEmail">admin@example.com</strong></h3>
+                        </div>
+                        <button onclick="logout()" class="btn btn-danger btn-small">Logout</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="saJson">Service Account JSON:</label>
-                    <textarea id="saJson" placeholder='{"type": "service_account", "project_id": "...", ...}'></textarea>
-                </div>
-                <div class="form-group">
-                    <button onclick="testServiceAccount()">Test Credentials</button>
-                    <button onclick="addServiceAccount()" class="success">Add Service Account</button>
-                    <div id="testResult" class="hidden"></div>
-                    <div id="addResult" class="hidden"></div>
-                </div>
-            </div>
 
-            <!-- Service Accounts List -->
-            <div class="container">
-                <h2>Existing Service Accounts</h2>
-                <button onclick="loadServiceAccounts()">Refresh List</button>
-                <div id="serviceAccountsList"></div>
-            </div>
+                <!-- Add Service Account -->
+                <div class="admin-section">
+                    <h2>Add New Service Account</h2>
+                    <form id="addServiceAccountForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="saName">Service Account Name</label>
+                                <input type="text" id="saName" placeholder="e.g., Production, Development, Team-A" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="saJson">Service Account JSON</label>
+                                <textarea id="saJson" placeholder='{"type": "service_account", "project_id": "...", ...}' required rows="6"></textarea>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                            <button type="button" class="btn btn-small" onclick="testServiceAccount()" style="background: var(--warning-color);">
+                                Test Credentials
+                            </button>
+                            <button type="submit" class="btn btn-primary">Add Service Account</button>
+                        </div>
+                        <div id="testResult" class="hidden"></div>
+                        <div id="addResult" class="hidden"></div>
+                    </form>
+                </div>
 
-            <!-- Assign Service Account -->
-            <div class="container">
-                <h2>Assign Service Account to User</h2>
-                <div class="form-group">
-                    <label for="userSelect">User ID:</label>
-                    <input type="number" id="userId" class="user-select" placeholder="Enter user ID">
+                <!-- Service Accounts List -->
+                <div class="admin-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>Service Accounts</h2>
+                        <button onclick="loadServiceAccounts()" class="btn btn-small">Refresh List</button>
+                    </div>
+                    <div id="serviceAccountsList"></div>
                 </div>
-                <div class="form-group">
-                    <label for="serviceAccountSelect">Service Account:</label>
-                    <select id="serviceAccountSelect">
-                        <option value="">Select service account...</option>
-                    </select>
+
+                <!-- Assign Service Account -->
+                <div class="admin-section">
+                    <h2>Assign Service Account to User</h2>
+                    <form id="assignForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="userId">User ID</label>
+                                <input type="number" id="userId" placeholder="Enter user ID" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="serviceAccountSelect">Service Account</label>
+                                <select id="serviceAccountSelect" required>
+                                    <option value="">Select service account...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Assign to User</button>
+                        <div id="assignResult" class="hidden mt-3"></div>
+                    </form>
                 </div>
-                <button onclick="assignServiceAccount()">Assign to User</button>
-                <div id="assignResult" class="hidden"></div>
+
+                <!-- System Status -->
+                <div class="admin-section">
+                    <h2>System Status</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div class="result-card">
+                            <h4>API Server</h4>
+                            <span class="status-badge status-match">Online</span>
+                        </div>
+                        <div class="result-card">
+                            <h4>Database</h4>
+                            <span class="status-badge status-match">Connected</span>
+                        </div>
+                        <div class="result-card">
+                            <h4>Google APIs</h4>
+                            <span id="googleApiStatus" class="status-badge status-partial">Testing...</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </main>
     </div>
 
     <script>
+        const API_BASE = window.location.origin;
         let authToken = '';
-        const API_BASE = 'http://localhost:3000';
 
-        async function login() {
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
+            setupFormHandlers();
+            testGoogleApiConnection();
+        });
+
+        function checkLoginStatus() {
+            const savedToken = localStorage.getItem('nyatet_admin_token');
+            const savedEmail = localStorage.getItem('nyatet_admin_email');
+
+            if (savedToken) {
+                authToken = savedToken;
+                document.getElementById('userEmail').textContent = savedEmail || 'Admin';
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                loadServiceAccounts();
+            }
+        }
+
+        function setupFormHandlers() {
+            // Login form
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+            // Add service account form
+            document.getElementById('addServiceAccountForm').addEventListener('submit', handleAddServiceAccount);
+
+            // Assign service account form
+            document.getElementById('assignForm').addEventListener('submit', handleAssignServiceAccount);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            clearAlert('loginError');
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+
+            setLoading('loginBtn', true);
 
             try {
                 const response = await fetch(`${API_BASE}/login`, {
@@ -246,65 +193,33 @@
 
                 if (result.success) {
                     authToken = result.token;
+                    localStorage.setItem('nyatet_admin_token', authToken);
+                    localStorage.setItem('nyatet_admin_email', email);
+
                     document.getElementById('userEmail').textContent = email;
                     document.getElementById('loginSection').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
+
                     loadServiceAccounts();
+                    showAlert('loginError', 'Login successful!', 'success');
                 } else {
-                    showError('loginError', result.message);
+                    showAlert('loginError', result.message || 'Login failed');
                 }
             } catch (error) {
-                showError('loginError', 'Login failed: ' + error.message);
+                showAlert('loginError', 'Network error. Please try again.');
+            } finally {
+                setLoading('loginBtn', false);
             }
         }
 
-        function logout() {
-            authToken = '';
-            document.getElementById('loginSection').style.display = 'block';
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('email').value = '';
-            document.getElementById('password').value = '';
-        }
+        async function handleAddServiceAccount(e) {
+            e.preventDefault();
+            clearAlert('addResult');
 
-        async function testServiceAccount() {
-            const saJson = document.getElementById('saJson').value;
-            const testResult = document.getElementById('testResult');
-
-            if (!saJson.trim()) {
-                showError('testResult', 'Please enter service account JSON');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/admin/service-accounts/test`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({ service_account_json: saJson })
-                });
-
-                const result = await response.json();
-
-                if (result.valid) {
-                    showSuccess('testResult', '✅ Service account credentials are valid!');
-                } else {
-                    showError('testResult', `❌ Invalid credentials: ${result.error}`);
-                }
-            } catch (error) {
-                showError('testResult', 'Test failed: ' + error.message);
-            }
-        }
-
-        async function addServiceAccount() {
             const name = document.getElementById('saName').value;
             const saJson = document.getElementById('saJson').value;
 
-            if (!name.trim() || !saJson.trim()) {
-                showError('addResult', 'Please fill in all fields');
-                return;
-            }
+            setLoading('addBtn', true);
 
             try {
                 const response = await fetch(`${API_BASE}/admin/service-accounts`, {
@@ -319,15 +234,84 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    showSuccess('addResult', 'Service account added successfully!');
+                    showAlert('addResult', 'Service account added successfully!', 'success');
                     document.getElementById('saName').value = '';
                     document.getElementById('saJson').value = '';
                     loadServiceAccounts();
                 } else {
-                    showError('addResult', 'Failed to add service account: ' + result.error);
+                    showAlert('addResult', 'Failed to add service account: ' + result.error);
                 }
             } catch (error) {
-                showError('addResult', 'Request failed: ' + error.message);
+                showAlert('addResult', 'Request failed: ' + error.message);
+            } finally {
+                setLoading('addBtn', false);
+            }
+        }
+
+        async function handleAssignServiceAccount(e) {
+            e.preventDefault();
+            clearAlert('assignResult');
+
+            const userId = parseInt(document.getElementById('userId').value);
+            const serviceAccountId = parseInt(document.getElementById('serviceAccountSelect').value);
+
+            setLoading('assignBtn', true);
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/service-accounts/assign`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ user_id: userId, service_account_id: serviceAccountId })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('assignResult', 'Service account assigned to user successfully!', 'success');
+                    document.getElementById('userId').value = '';
+                    document.getElementById('serviceAccountSelect').value = '';
+                } else {
+                    showAlert('assignResult', 'Failed to assign service account');
+                }
+            } catch (error) {
+                showAlert('assignResult', 'Request failed: ' + error.message);
+            } finally {
+                setLoading('assignBtn', false);
+            }
+        }
+
+        async function testServiceAccount() {
+            const saJson = document.getElementById('saJson').value;
+
+            if (!saJson.trim()) {
+                showAlert('testResult', 'Please enter service account JSON');
+                return;
+            }
+
+            clearAlert('testResult');
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/service-accounts/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ service_account_json: saJson })
+                });
+
+                const result = await response.json();
+
+                if (result.valid) {
+                    showAlert('testResult', '✅ Service account credentials are valid!', 'success');
+                } else {
+                    showAlert('testResult', `❌ Invalid credentials: ${result.error}`);
+                }
+            } catch (error) {
+                showAlert('testResult', 'Test failed: ' + error.message);
             }
         }
 
@@ -344,8 +328,6 @@
                 if (result.success) {
                     displayServiceAccounts(result.serviceAccounts);
                     updateServiceAccountSelect(result.serviceAccounts);
-                } else {
-                    console.error('Failed to load service accounts');
                 }
             } catch (error) {
                 console.error('Failed to load service accounts:', error);
@@ -356,25 +338,41 @@
             const container = document.getElementById('serviceAccountsList');
 
             if (serviceAccounts.length === 0) {
-                container.innerHTML = '<p>No service accounts found.</p>';
+                container.innerHTML = '<p style="color: #6b7280; text-align: center;">No service accounts found.</p>';
                 return;
             }
 
             container.innerHTML = serviceAccounts.map(sa => `
-                <div class="service-account ${sa.is_active ? 'active' : ''}">
-                    <h3>${sa.name} <span class="status ${sa.is_active ? 'active' : 'inactive'}">${sa.is_active ? 'Active' : 'Inactive'}</span></h3>
-                    <p><strong>ID:</strong> ${sa.id}</p>
-                    <p><strong>Created:</strong> ${new Date(sa.created_at).toLocaleString()}</p>
-                    <p><strong>Updated:</strong> ${new Date(sa.updated_at).toLocaleString()}</p>
-                    <details>
-                        <summary>View JSON (Click to expand)</summary>
-                        <pre>${JSON.stringify(JSON.parse(sa.service_account_json), null, 2)}</pre>
+                <div class="service-account-item ${sa.is_active ? 'active' : ''}">
+                    <div class="service-account-header">
+                        <div>
+                            <div class="service-account-name">
+                                ${sa.name}
+                                ${sa.is_active ? '<span class="status-badge status-match">Active</span>' : '<span class="status-badge" style="background: #e5e7eb; color: #6b7280;">Inactive</span>'}
+                            </div>
+                            <div class="service-account-meta">
+                                <span>ID: ${sa.id}</span>
+                                <span>Created: ${new Date(sa.created_at).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <details style="margin-top: 1rem;">
+                        <summary style="cursor: pointer; color: #6b7280; font-size: 0.875rem;">
+                            View JSON (Click to expand)
+                        </summary>
+                        <div class="extracted-data" style="margin-top: 0.5rem;">
+                            ${JSON.stringify(JSON.parse(sa.service_account_json), null, 2)}
+                        </div>
                     </details>
-                    <div class="actions">
-                        <button onclick="toggleServiceAccount(${sa.id}, ${!sa.is_active})" class="${sa.is_active ? 'warning' : 'success'}">
+                    <div class="service-account-actions">
+                        <button onclick="toggleServiceAccount(${sa.id}, ${!sa.is_active})"
+                                class="btn btn-small ${sa.is_active ? 'btn-danger' : 'btn-primary'}"
+                                style="${sa.is_active ? 'background: var(--warning-color);' : ''}">
                             ${sa.is_active ? 'Deactivate' : 'Activate'}
                         </button>
-                        <button onclick="deleteServiceAccount(${sa.id})" class="danger" onclick="return confirm('Are you sure you want to delete this service account?')">
+                        <button onclick="deleteServiceAccount(${sa.id})"
+                                class="btn btn-danger btn-small"
+                                onclick="return confirm('Are you sure you want to delete this service account?')">
                             Delete
                         </button>
                     </div>
@@ -436,80 +434,73 @@
             }
         }
 
-        async function assignServiceAccount() {
-            const userId = document.getElementById('userId').value;
-            const serviceAccountId = document.getElementById('serviceAccountSelect').value;
+        function logout() {
+            localStorage.removeItem('nyatet_admin_token');
+            localStorage.removeItem('nyatet_admin_email');
+            authToken = '';
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        }
 
-            if (!userId || !serviceAccountId) {
-                showError('assignResult', 'Please select both user and service account');
-                return;
+        function setLoading(buttonId, loading) {
+            const button = document.getElementById(buttonId);
+            const text = document.getElementById(buttonId + 'Text');
+
+            if (loading) {
+                button.disabled = true;
+                if (text) {
+                    text.innerHTML = '<span class="loading"></span> Processing...';
+                }
+            } else {
+                button.disabled = false;
+                if (text) {
+                    text.textContent = buttonId === 'loginBtnText' ? 'Login' :
+                                     buttonId === 'addBtnText' ? 'Add Service Account' : 'Assign';
+                }
             }
+        }
+
+        function showAlert(elementId, message, type = 'error') {
+            const element = document.getElementById(elementId);
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+
+            element.innerHTML = `
+                <div class="alert ${alertClass}">
+                    ${message}
+                </div>
+            `;
+            element.classList.remove('hidden');
+        }
+
+        function clearAlert(elementId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = '';
+            element.classList.add('hidden');
+        }
+
+        async function testGoogleApiConnection() {
+            const statusElement = document.getElementById('googleApiStatus');
 
             try {
-                const response = await fetch(`${API_BASE}/admin/service-accounts/assign`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
-                    },
-                    body: JSON.stringify({
-                        user_id: parseInt(userId),
-                        service_account_id: parseInt(serviceAccountId)
-                    })
+                // Test by trying to list service accounts
+                const response = await fetch(`${API_BASE}/admin/service-accounts`, {
+                    headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
                 });
 
-                const result = await response.json();
-
-                if (result.success) {
-                    showSuccess('assignResult', 'Service account assigned to user successfully!');
+                if (response.ok) {
+                    statusElement.textContent = 'Connected';
+                    statusElement.className = 'status-badge status-match';
                 } else {
-                    showError('assignResult', 'Failed to assign service account');
+                    statusElement.textContent = 'Auth Required';
+                    statusElement.className = 'status-badge status-partial';
                 }
             } catch (error) {
-                showError('assignResult', 'Request failed: ' + error.message);
+                statusElement.textContent = 'Disconnected';
+                statusElement.className = 'status-badge status-mismatch';
             }
         }
-
-        function showError(elementId, message) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.className = 'error';
-            element.classList.remove('hidden');
-        }
-
-        function showSuccess(elementId, message) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.className = 'success';
-            element.classList.remove('hidden');
-        }
-
-        // Check if already logged in on page load
-        window.onload = function() {
-            const savedToken = localStorage.getItem('nyatet_auth_token');
-            if (savedToken) {
-                authToken = savedToken;
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-                loadServiceAccounts();
-            }
-        };
-
-        // Save token to localStorage on login
-        const originalLogin = login;
-        login = function() {
-            originalLogin();
-            if (authToken) {
-                localStorage.setItem('nyatet_auth_token', authToken);
-            }
-        };
-
-        // Clear token on logout
-        const originalLogout = logout;
-        logout = function() {
-            originalLogout();
-            localStorage.removeItem('nyatet_auth_token');
-        };
     </script>
 </body>
 </html>

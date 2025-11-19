@@ -285,6 +285,40 @@ bun start
 
 Server akan berjalan di `http://localhost:3000`
 
+## 🖥️ Frontend Interface
+
+### User Interface
+- **Login/Register**: `http://localhost:3000` atau `http://localhost:3000/login.html`
+- **Dashboard**: `http://localhost:3000/dashboard.html` (setelah login)
+
+### Admin Interface
+- **Admin Panel**: `http://localhost:3000/admin`
+  - Service account management
+  - User assignment
+  - System monitoring
+
+### Frontend Features
+
+#### **Authentication**
+- ✅ User registration dengan validation
+- ✅ Login dengan JWT token
+- ✅ Auto-logout saat token expired
+- ✅ Remember me functionality
+
+#### **Meeting Analysis Dashboard**
+- ✅ Drag & drop image upload
+- ✅ Real-time AI analysis
+- ✅ Result visualization dengan status badges
+- ✅ Analysis history (localStorage)
+- ✅ Responsive design
+
+#### **Admin Panel**
+- ✅ Service account CRUD operations
+- ✅ Credentials testing sebelum digunakan
+- ✅ User-service account assignment
+- ✅ System status monitoring
+- ✅ Real-time API connection testing
+
 ## 🧪 Testing
 
 ### Test Registrasi & Login

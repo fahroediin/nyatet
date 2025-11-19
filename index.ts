@@ -12,19 +12,65 @@ const app = new Elysia()
       secret: process.env.JWT_SECRET || "secret-kunci-rahasia",
     })
   )
-  // Root endpoint for testing
+  // Serve login page as root
   .get("/", () => {
-    return {
-      service: "Nyatet - Business Analyst Assistant API",
-      status: "running",
-      version: "2.0.0",
-      endpoints: {
-        auth: ["/register", "/login"],
-        admin: ["/admin", "/admin/service-accounts"],
-        analysis: ["/analyze-meeting"]
-      },
-      docs: "Visit /admin for service account management"
-    };
+    const fs = require('fs');
+    const path = require('path');
+
+    try {
+      const indexPath = path.join(process.cwd(), 'login.html');
+      const html = fs.readFileSync(indexPath, 'utf8');
+      return new Response(html, {
+        headers: { 'Content-Type': 'text/html' }
+      });
+    } catch (error) {
+      return {
+        service: "Nyatet - Business Analyst Assistant API",
+        status: "running",
+        version: "2.0.0",
+        endpoints: {
+          auth: ["/register", "/login"],
+          admin: ["/admin", "/admin/service-accounts"],
+          analysis: ["/analyze-meeting"],
+          frontend: ["/", "/login.html", "/dashboard.html"]
+        },
+        docs: "Visit /admin for service account management"
+      };
+    }
+  })
+  .get("/login.html", () => {
+    const fs = require('fs');
+    const path = require('path');
+
+    try {
+      const loginPath = path.join(process.cwd(), 'login.html');
+      const html = fs.readFileSync(loginPath, 'utf8');
+      return new Response(html, {
+        headers: { 'Content-Type': 'text/html' }
+      });
+    } catch (error) {
+      return new Response('Login page not found', {
+        status: 404,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
+  })
+  .get("/dashboard.html", () => {
+    const fs = require('fs');
+    const path = require('path');
+
+    try {
+      const dashboardPath = path.join(process.cwd(), 'dashboard.html');
+      const html = fs.readFileSync(dashboardPath, 'utf8');
+      return new Response(html, {
+        headers: { 'Content-Type': 'text/html' }
+      });
+    } catch (error) {
+      return new Response('Dashboard page not found', {
+        status: 404,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
   })
   // --- Auth Routes ---
   .post(
@@ -247,6 +293,39 @@ const app = new Elysia()
       }),
     }
   )
+  // Serve static files
+  .get("/css/*", ({ params }) => {
+    const fs = require('fs');
+    const path = require('path');
+    console.log('CSS params:', params);
+    const cssPath = params['*'] || 'style.css';
+    const filePath = path.join(process.cwd(), 'public', 'css', cssPath);
+
+    try {
+      const content = fs.readFileSync(filePath);
+      return new Response(content, {
+        headers: { 'Content-Type': 'text/css' }
+      });
+    } catch (error) {
+      console.log('CSS file not found:', filePath);
+      return new Response('CSS file not found', { status: 404 });
+    }
+  })
+  .get("/js/*", ({ params }) => {
+    const fs = require('fs');
+    const path = require('path');
+    const jsPath = params['*'] || 'app.js';
+    const filePath = path.join(process.cwd(), 'public', 'js', jsPath);
+
+    try {
+      const content = fs.readFileSync(filePath);
+      return new Response(content, {
+        headers: { 'Content-Type': 'application/javascript' }
+      });
+    } catch (error) {
+      return new Response('JS file not found', { status: 404 });
+    }
+  })
   // Serve admin interface
   .get("/admin", () => {
     try {

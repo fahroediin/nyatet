@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Nyatet Business Analyst Assistant</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1>🚀 Nyatet</h1>
+            <p class="subtitle">Business Analyst Assistant</p>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+                <button class="auth-tab" onclick="switchTab('register')">Register</button>
+            </div>
+
+            <!-- Alerts -->
+            <div id="alertContainer"></div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary" id="loginBtn">
+                    <span id="loginBtnText">Login</span>
+                </button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form hidden">
+                <div class="form-group">
+                    <label for="registerEmail">Email Address</label>
+                    <input type="email" id="registerEmail" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label for="registerConfirmPassword">Confirm Password</label>
+                    <input type="password" id="registerConfirmPassword" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label for="spreadsheetId">Google Sheets ID</label>
+                    <input type="text" id="spreadsheetId" required placeholder="https://docs.google.com/spreadsheets/d/SPREADSHEET_ID_HERE/edit">
+                    <small style="color: #6b7280; font-size: 0.875rem;">
+                        Your Google Sheets ID. Create a spreadsheet with 3 tabs: Summary, Extracted, Doc
+                    </small>
+                </div>
+                <button type="submit" class="btn btn-primary" id="registerBtn">
+                    <span id="registerBtnText">Register</span>
+                </button>
+            </form>
+
+            <div class="mt-4">
+                <a href="/admin" style="color: #6b7280; text-decoration: none; font-size: 0.875rem;">
+                    Admin Panel →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        // Tab switching
+        function switchTab(tab) {
+            const loginTab = document.querySelector('.auth-tab:first-child');
+            const registerTab = document.querySelector('.auth-tab:last-child');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+
+            if (tab === 'login') {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            } else {
+                loginTab.classList.remove('active');
+                registerTab.classList.add('active');
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
+            }
+
+            clearAlerts();
+        }
+
+        // Alert functions
+        function showAlert(message, type = 'error') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+
+            alertContainer.innerHTML = `
+                <div class="alert ${alertClass}">
+                    ${message}
+                </div>
+            `;
+        }
+
+        function clearAlerts() {
+            document.getElementById('alertContainer').innerHTML = '';
+        }
+
+        // Form functions
+        function setLoading(buttonId, loading = true) {
+            const button = document.getElementById(buttonId);
+            const text = document.getElementById(buttonId + 'Text');
+
+            if (loading) {
+                button.disabled = true;
+                text.innerHTML = '<span class="loading"></span> Processing...';
+            } else {
+                button.disabled = false;
+                text.textContent = buttonId === 'loginBtnText' ? 'Login' : 'Register';
+            }
+        }
+
+        // Extract Spreadsheet ID
+        function extractSpreadsheetId(url) {
+            const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+            return match ? match[1] : url;
+        }
+
+        // Login form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearAlerts();
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            setLoading('loginBtn', true);
+
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.setItem('nyatet_auth_token', result.token);
+                    localStorage.setItem('nyatet_user_email', email);
+                    showAlert('Login successful! Redirecting...', 'success');
+
+                    setTimeout(() => {
+                        window.location.href = '/dashboard.html';
+                    }, 1500);
+                } else {
+                    showAlert(result.message || 'Login failed');
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.');
+            } finally {
+                setLoading('loginBtn', false);
+            }
+        });
+
+        // Register form submission
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearAlerts();
+
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            let spreadsheetUrl = document.getElementById('spreadsheetId').value;
+
+            // Validation
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('Password must be at least 6 characters');
+                return;
+            }
+
+            const spreadsheetId = extractSpreadsheetId(spreadsheetUrl);
+
+            setLoading('registerBtn', true);
+
+            try {
+                const response = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        spreadsheet_id: spreadsheetId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Registration successful! Please login.', 'success');
+
+                    // Switch to login tab after successful registration
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('loginEmail').value = email;
+                    }, 1500);
+                } else {
+                    showAlert(result.message || 'Registration failed');
+                }
+            } catch (error) {
+                showAlert('Network error. Please try again.');
+            } finally {
+                setLoading('registerBtn', false);
+            }
+        });
+
+        // Check if already logged in
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('nyatet_auth_token');
+            if (token) {
+                // Verify token is still valid
+                fetch(`${API_BASE}/analyze-meeting`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ note: 'test' })
+                })
+                .then(response => {
+                    if (response.status !== 401) {
+                        // Token is valid, redirect to dashboard
+                        window.location.href = '/dashboard.html';
+                    } else {
+                        // Token invalid, clear it
+                        localStorage.removeItem('nyatet_auth_token');
+                        localStorage.removeItem('nyatet_user_email');
+                    }
+                })
+                .catch(() => {
+                    // Network error, but continue to login page
+                    localStorage.removeItem('nyatet_auth_token');
+                    localStorage.removeItem('nyatet_user_email');
+                });
+            }
+        });
+
+        // Input formatting helpers
+        document.getElementById('spreadsheetId').addEventListener('input', function(e) {
+            // Auto-convert full URL to just ID
+            const value = e.target.value;
+            if (value.includes('docs.google.com/spreadsheets')) {
+                const id = extractSpreadsheetId(value);
+                if (id && id !== value) {
+                    e.target.value = id;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

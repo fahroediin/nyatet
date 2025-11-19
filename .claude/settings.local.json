@@ -3,7 +3,8 @@
     "allow": [
       "Bash(bun build:*)",
       "Bash(netstat:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(bun run index.ts)"
     ],
     "deny": [],
     "ask": []
