@@ -12,6 +12,20 @@ const app = new Elysia()
       secret: process.env.JWT_SECRET || "secret-kunci-rahasia",
     })
   )
+  // Root endpoint for testing
+  .get("/", () => {
+    return {
+      service: "Nyatet - Business Analyst Assistant API",
+      status: "running",
+      version: "2.0.0",
+      endpoints: {
+        auth: ["/register", "/login"],
+        admin: ["/admin", "/admin/service-accounts"],
+        analysis: ["/analyze-meeting"]
+      },
+      docs: "Visit /admin for service account management"
+    };
+  })
   // --- Auth Routes ---
   .post(
     "/register",
@@ -233,6 +247,22 @@ const app = new Elysia()
       }),
     }
   )
+  // Serve admin interface
+  .get("/admin", () => {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const html = fs.readFileSync(path.join(process.cwd(), 'admin.html'), 'utf8');
+      return new Response(html, {
+        headers: { 'Content-Type': 'text/html' }
+      });
+    } catch (error) {
+      return new Response('Admin interface not found', {
+        status: 404,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
+  })
   .listen(3000);
 
 console.log(

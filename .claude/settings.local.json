@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bun build:*)"
+      "Bash(bun build:*)",
+      "Bash(netstat:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

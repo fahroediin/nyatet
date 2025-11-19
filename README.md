@@ -51,6 +51,29 @@ CREATE TABLE logs (
 );
 ```
 
+### Tabel `service_accounts` (NEW)
+```sql
+CREATE TABLE service_accounts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT UNIQUE,
+  service_account_json TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Tabel `user_service_accounts` (NEW)
+```sql
+CREATE TABLE user_service_accounts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  service_account_id INTEGER,
+  FOREIGN KEY (user_id) REFERENCES users (id),
+  FOREIGN KEY (service_account_id) REFERENCES service_accounts (id)
+);
+```
+
 ## 🔗 API Endpoints
 
 ### Autentikasi
@@ -110,6 +133,62 @@ image: (file) - Screenshot/gambar meeting
 }
 ```
 
+### Service Account Management (Admin)
+
+#### `GET /admin`
+**Deskripsi**: Admin interface untuk mengelola service accounts
+**Headers**: `Authorization: Bearer {jwt_token}`
+
+#### `POST /admin/service-accounts`
+**Deskripsi**: Tambah service account baru
+**Headers**: `Authorization: Bearer {jwt_token}`
+**Body**:
+```json
+{
+  "name": "Production Account",
+  "service_account_json": "{...}"
+}
+```
+
+#### `GET /admin/service-accounts`
+**Deskripsi**: Daftar semua service accounts
+**Headers**: `Authorization: Bearer {jwt_token}`
+
+#### `PUT /admin/service-accounts/:id/toggle`
+**Deskripsi**: Aktifkan/non-aktifkan service account
+**Headers**: `Authorization: Bearer {jwt_token}`
+**Body**:
+```json
+{
+  "is_active": true
+}
+```
+
+#### `DELETE /admin/service-accounts/:id`
+**Deskripsi**: Hapus service account
+**Headers**: `Authorization: Bearer {jwt_token}`
+
+#### `POST /admin/service-accounts/test`
+**Deskripsi**: Test service account credentials
+**Headers**: `Authorization: Bearer {jwt_token}`
+**Body**:
+```json
+{
+  "service_account_json": "{...}"
+}
+```
+
+#### `POST /admin/service-accounts/assign`
+**Deskripsi**: Assign service account ke user
+**Headers**: `Authorization: Bearer {jwt_token}`
+**Body**:
+```json
+{
+  "user_id": 1,
+  "service_account_id": 2
+}
+```
+
 ## ⚙️ Konfigurasi Environment
 
 ### File `.env`
@@ -120,10 +199,28 @@ JWT_SECRET=your_jwt_secret_key
 ```
 
 ### Google Service Account
-- Buat file `service-account.json` dari Google Cloud Console
-- pastikan memiliki akses:
-  - Google Drive API
-  - Google Sheets API
+
+**Multiple Configuration Options:**
+
+1. **File-Based (Legacy)**:
+   ```bash
+   # Upload service-account.json ke project root
+   ```
+
+2. **Environment Variable (Alternative)**:
+   ```env
+   GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"your-project-id",...}
+   ```
+
+3. **Database Management (NEW - Recommended)**:
+   - Use admin interface at `http://localhost:3000/admin`
+   - Add multiple service accounts
+   - Assign specific accounts to users
+   - Dynamic switching without restart
+
+**API Access Required:**
+- Google Drive API
+- Google Sheets API
 
 ### Google Sheets Structure
 Spreadsheet harus memiliki 3 tabs:
@@ -210,6 +307,28 @@ curl -X POST http://localhost:3000/analyze-meeting \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -F "note=Meeting discusses Q3 revenue targets" \
   -F "image=@path/to/meeting-screenshot.jpg"
+```
+
+### Test Service Account Management
+```bash
+# Test service account credentials
+curl -X POST http://localhost:3000/admin/service-accounts/test \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"service_account_json":"{\"type\":\"service_account\",...}"}'
+
+# Add new service account
+curl -X POST http://localhost:3000/admin/service-accounts \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"name":"Production","service_account_json":"{\"type\":\"service_account\",...}"}'
+
+# List service accounts
+curl -X GET http://localhost:3000/admin/service-accounts \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Access admin interface
+# Open browser: http://localhost:3000/admin
 ```
 
 ## 🔒 Keamanan

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nyatet - Service Account Admin</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #555;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 150px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button.danger {
+            background-color: #dc3545;
+        }
+        button.danger:hover {
+            background-color: #c82333;
+        }
+        button.success {
+            background-color: #28a745;
+        }
+        button.success:hover {
+            background-color: #218838;
+        }
+        button.warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        button.warning:hover {
+            background-color: #e0a800;
+        }
+        .service-account {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .service-account.active {
+            border-color: #28a745;
+            background-color: #f8fff9;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status.active {
+            background-color: #28a745;
+            color: white;
+        }
+        .status.inactive {
+            background-color: #6c757d;
+            color: white;
+        }
+        .auth-section {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .actions {
+            margin-top: 15px;
+        }
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .main-content {
+            display: none;
+        }
+        .user-select {
+            max-width: 300px;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Nyatet - Service Account Management</h1>
+
+        <!-- Login Section -->
+        <div id="loginSection" class="login-form">
+            <h2>Admin Login</h2>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" placeholder="admin@example.com">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="Password">
+            </div>
+            <button onclick="login()" class="success">Login</button>
+            <div id="loginError" class="error hidden"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="main-content">
+            <div class="auth-section">
+                <strong>Logged in as:</strong> <span id="userEmail"></span>
+                <button onclick="logout()" style="float: right;" class="warning">Logout</button>
+            </div>
+
+            <!-- Add Service Account -->
+            <div class="container">
+                <h2>Add New Service Account</h2>
+                <div class="form-group">
+                    <label for="saName">Service Account Name:</label>
+                    <input type="text" id="saName" placeholder="e.g., Production, Development, Team-A">
+                </div>
+                <div class="form-group">
+                    <label for="saJson">Service Account JSON:</label>
+                    <textarea id="saJson" placeholder='{"type": "service_account", "project_id": "...", ...}'></textarea>
+                </div>
+                <div class="form-group">
+                    <button onclick="testServiceAccount()">Test Credentials</button>
+                    <button onclick="addServiceAccount()" class="success">Add Service Account</button>
+                    <div id="testResult" class="hidden"></div>
+                    <div id="addResult" class="hidden"></div>
+                </div>
+            </div>
+
+            <!-- Service Accounts List -->
+            <div class="container">
+                <h2>Existing Service Accounts</h2>
+                <button onclick="loadServiceAccounts()">Refresh List</button>
+                <div id="serviceAccountsList"></div>
+            </div>
+
+            <!-- Assign Service Account -->
+            <div class="container">
+                <h2>Assign Service Account to User</h2>
+                <div class="form-group">
+                    <label for="userSelect">User ID:</label>
+                    <input type="number" id="userId" class="user-select" placeholder="Enter user ID">
+                </div>
+                <div class="form-group">
+                    <label for="serviceAccountSelect">Service Account:</label>
+                    <select id="serviceAccountSelect">
+                        <option value="">Select service account...</option>
+                    </select>
+                </div>
+                <button onclick="assignServiceAccount()">Assign to User</button>
+                <div id="assignResult" class="hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = '';
+        const API_BASE = 'http://localhost:3000';
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    authToken = result.token;
+                    document.getElementById('userEmail').textContent = email;
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    loadServiceAccounts();
+                } else {
+                    showError('loginError', result.message);
+                }
+            } catch (error) {
+                showError('loginError', 'Login failed: ' + error.message);
+            }
+        }
+
+        function logout() {
+            authToken = '';
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        async function testServiceAccount() {
+            const saJson = document.getElementById('saJson').value;
+            const testResult = document.getElementById('testResult');
+
+            if (!saJson.trim()) {
+                showError('testResult', 'Please enter service account JSON');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/service-accounts/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ service_account_json: saJson })
+                });
+
+                const result = await response.json();
+
+                if (result.valid) {
+                    showSuccess('testResult', '✅ Service account credentials are valid!');
+                } else {
+                    showError('testResult', `❌ Invalid credentials: ${result.error}`);
+                }
+            } catch (error) {
+                showError('testResult', 'Test failed: ' + error.message);
+            }
+        }
+
+        async function addServiceAccount() {
+            const name = document.getElementById('saName').value;
+            const saJson = document.getElementById('saJson').value;
+
+            if (!name.trim() || !saJson.trim()) {
+                showError('addResult', 'Please fill in all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/service-accounts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ name, service_account_json: saJson })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess('addResult', 'Service account added successfully!');
+                    document.getElementById('saName').value = '';
+                    document.getElementById('saJson').value = '';
+                    loadServiceAccounts();
+                } else {
+                    showError('addResult', 'Failed to add service account: ' + result.error);
+                }
+            } catch (error) {
+                showError('addResult', 'Request failed: ' + error.message);
+            }
+        }
+
+        async function loadServiceAccounts() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/service-accounts`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayServiceAccounts(result.serviceAccounts);
+                    updateServiceAccountSelect(result.serviceAccounts);
+                } else {
+                    console.error('Failed to load service accounts');
+                }
+            } catch (error) {
+                console.error('Failed to load service accounts:', error);
+            }
+        }
+
+        function displayServiceAccounts(serviceAccounts) {
+            const container = document.getElementById('serviceAccountsList');
+
+            if (serviceAccounts.length === 0) {
+                container.innerHTML = '<p>No service accounts found.</p>';
+                return;
+            }
+
+            container.innerHTML = serviceAccounts.map(sa => `
+                <div class="service-account ${sa.is_active ? 'active' : ''}">
+                    <h3>${sa.name} <span class="status ${sa.is_active ? 'active' : 'inactive'}">${sa.is_active ? 'Active' : 'Inactive'}</span></h3>
+                    <p><strong>ID:</strong> ${sa.id}</p>
+                    <p><strong>Created:</strong> ${new Date(sa.created_at).toLocaleString()}</p>
+                    <p><strong>Updated:</strong> ${new Date(sa.updated_at).toLocaleString()}</p>
+                    <details>
+                        <summary>View JSON (Click to expand)</summary>
+                        <pre>${JSON.stringify(JSON.parse(sa.service_account_json), null, 2)}</pre>
+                    </details>
+                    <div class="actions">
+                        <button onclick="toggleServiceAccount(${sa.id}, ${!sa.is_active})" class="${sa.is_active ? 'warning' : 'success'}">
+                            ${sa.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button onclick="deleteServiceAccount(${sa.id})" class="danger" onclick="return confirm('Are you sure you want to delete this service account?')">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateServiceAccountSelect(serviceAccounts) {
+            const select = document.getElementById('serviceAccountSelect');
+            select.innerHTML = '<option value="">Select service account...</option>' +
+                serviceAccounts.map(sa => `<option value="${sa.id}">${sa.name} ${sa.is_active ? '(Active)' : '(Inactive)'}</option>`).join('');
+        }
+
+        async function toggleServiceAccount(id, isActive) {
+            try {
+                const response = await fetch(`${API_BASE}/admin/service-accounts/${id}/toggle`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ is_active: isActive })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    loadServiceAccounts();
+                } else {
+                    alert('Failed to toggle service account: ' + result.error);
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        }
+
+        async function deleteServiceAccount(id) {
+            if (!confirm('Are you sure you want to delete this service account?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/service-accounts/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    loadServiceAccounts();
+                } else {
+                    alert('Failed to delete service account');
+                }
+            } catch (error) {
+                alert('Request failed: ' + error.message);
+            }
+        }
+
+        async function assignServiceAccount() {
+            const userId = document.getElementById('userId').value;
+            const serviceAccountId = document.getElementById('serviceAccountSelect').value;
+
+            if (!userId || !serviceAccountId) {
+                showError('assignResult', 'Please select both user and service account');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/service-accounts/assign`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        user_id: parseInt(userId),
+                        service_account_id: parseInt(serviceAccountId)
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess('assignResult', 'Service account assigned to user successfully!');
+                } else {
+                    showError('assignResult', 'Failed to assign service account');
+                }
+            } catch (error) {
+                showError('assignResult', 'Request failed: ' + error.message);
+            }
+        }
+
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = 'error';
+            element.classList.remove('hidden');
+        }
+
+        function showSuccess(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = 'success';
+            element.classList.remove('hidden');
+        }
+
+        // Check if already logged in on page load
+        window.onload = function() {
+            const savedToken = localStorage.getItem('nyatet_auth_token');
+            if (savedToken) {
+                authToken = savedToken;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                loadServiceAccounts();
+            }
+        };
+
+        // Save token to localStorage on login
+        const originalLogin = login;
+        login = function() {
+            originalLogin();
+            if (authToken) {
+                localStorage.setItem('nyatet_auth_token', authToken);
+            }
+        };
+
+        // Clear token on logout
+        const originalLogout = logout;
+        logout = function() {
+            originalLogout();
+            localStorage.removeItem('nyatet_auth_token');
+        };
+    </script>
+</body>
+</html>
