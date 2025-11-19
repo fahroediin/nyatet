@@ -320,16 +320,31 @@ const app = new Elysia()
 
       } catch (error) {
         console.error("Error during analysis:", error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+        // Provide user-friendly error message
+        let userMessage = "Analysis failed";
+        if (errorMessage.includes("No service account configured")) {
+          userMessage = "No service account configured. Please add one via admin panel at /admin or set GOOGLE_SERVICE_ACCOUNT_JSON environment variable";
+        } else if (errorMessage.includes("Invalid GOOGLE_SERVICE_ACCOUNT_JSON")) {
+          userMessage = "Invalid Google Service Account configuration in environment variables. Please check your GOOGLE_SERVICE_ACCOUNT_JSON format.";
+        } else if (errorMessage.includes("ENOTDIR") || errorMessage.includes("ENOENT")) {
+          userMessage = "File system error. Please ensure all file paths are accessible.";
+        } else if (errorMessage.includes("googleapis")) {
+          userMessage = "Google API error. Please check your service account permissions and network connection.";
+        }
+
         return {
-          error: "Analysis failed",
-          details: error instanceof Error ? error.message : "Unknown error"
+          error: userMessage,
+          details: errorMessage,
+          requiresConfig: errorMessage.includes("No service account configured") || errorMessage.includes("GOOGLE_SERVICE_ACCOUNT_JSON")
         };
       }
     },
     {
       body: t.Object({
         note: t.String(),
-        images: t.Optional(t.Union([t.File(), t.Array(t.File())])), // Support single or multiple files
+        images: t.Union([t.File(), t.Array(t.File())]), // Support single or multiple files (required)
       }),
     }
   )

@@ -282,6 +282,16 @@
                     });
                 } else {
                     showAlert(result.error || 'Analysis failed');
+
+                    // If configuration is required, provide helpful guidance
+                    if (result.requiresConfig) {
+                        setTimeout(() => {
+                            if (confirm('Service account configuration required. Would you like to open the admin panel to set up Google credentials?')) {
+                                window.open('/admin', '_blank');
+                            }
+                        }, 1000);
+                    }
+
                     if (result.details) {
                         console.error('Analysis details:', result.details);
                     }

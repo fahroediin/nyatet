@@ -37,26 +37,35 @@ export class ServiceAccountManager {
       `).get() as ServiceAccount;
     }
 
-    // Fallback to file-based service account
+    // Fallback to environment variable
     if (!serviceAccount) {
       try {
-        const auth = new google.auth.GoogleAuth({
-          keyFile: "service-account.json",
-          scopes: [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive",
-          ],
-        });
+        const envServiceAccount = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+        if (envServiceAccount) {
+          const credentials = JSON.parse(envServiceAccount);
+          const auth = new google.auth.GoogleAuth({
+            credentials,
+            scopes: [
+              "https://www.googleapis.com/auth/spreadsheets",
+              "https://www.googleapis.com/auth/drive",
+            ],
+          });
 
-        return {
-          auth,
-          sheets: google.sheets({ version: "v4", auth }),
-          drive: google.drive({ version: "v3", auth }),
-          serviceAccount: null
-        };
+          return {
+            auth,
+            sheets: google.sheets({ version: "v4", auth }),
+            drive: google.drive({ version: "v3", auth }),
+            serviceAccount: null
+          };
+        }
       } catch (error) {
-        throw new Error("No service account configured. Please add one via API or service-account.json file");
+        throw new Error("Invalid GOOGLE_SERVICE_ACCOUNT_JSON in environment variables");
       }
+    }
+
+    // If still no service account found, throw clear error
+    if (!serviceAccount) {
+      throw new Error("No service account configured. Please add one via admin panel at /admin or set GOOGLE_SERVICE_ACCOUNT_JSON environment variable");
     }
 
     // Use database service account

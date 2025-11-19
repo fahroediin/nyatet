@@ -200,23 +200,24 @@ JWT_SECRET=your_jwt_secret_key
 
 ### Google Service Account
 
-**Multiple Configuration Options:**
+**Configuration Options (In-App Management):**
 
-1. **File-Based (Legacy)**:
-   ```bash
-   # Upload service-account.json ke project root
-   ```
+1. **Admin Panel Interface (Recommended)**:
+   - Go to `http://localhost:3000/admin`
+   - Login with any user account
+   - Add service accounts via web interface
+   - Test credentials before saving
+   - No file management required
 
-2. **Environment Variable (Alternative)**:
+2. **Environment Variable (For Production)**:
    ```env
    GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"your-project-id",...}
    ```
 
-3. **Database Management (NEW - Recommended)**:
-   - Use admin interface at `http://localhost:3000/admin`
-   - Add multiple service accounts
-   - Assign specific accounts to users
-   - Dynamic switching without restart
+3. **User-Specific Assignment (Advanced)**:
+   - Assign different service accounts to different users
+   - Each user can have their own Google Drive/Sheets access
+   - Manage via admin panel interface
 
 **API Access Required:**
 - Google Drive API
