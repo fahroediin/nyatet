@@ -1,0 +1,19 @@
+{
+  "name": "nyatet",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@elysiajs/jwt": "^1.4.0",
+    "@google/generative-ai": "^0.24.1",
+    "elysia": "^1.4.16",
+    "googleapis": "^166.0.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
